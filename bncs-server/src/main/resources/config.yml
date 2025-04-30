@@ -1,0 +1,19 @@
+# config.yml
+mongo:
+  host: localhost
+  port: 27017
+  database: bnemu
+  username: root
+  password: rootpass
+
+server:
+  bncs:
+    port: 6112
+  d2cs:
+    port: 6113
+  d2dbs:
+    port: 6114
+  d2gs:
+    port: 4000
+  telnet:
+    port: 23
