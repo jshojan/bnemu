@@ -2,7 +2,6 @@ package org.bnemu.bncs.net.logging;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-//import org.bnemu.core.net.packet.BncsPacket;
 import org.bnemu.bncs.net.packet.BncsPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
