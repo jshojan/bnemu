@@ -94,4 +94,4 @@ This project is licensed under the MIT License. See the `LICENSE` file for more 
 
 - [PvPGN](https://github.com/pvpgn/pvpgn-server) — reference implementation of a classic BNCS emulator
 - [BNETDocs](https://bnetdocs.org/) — protocol documentation and packet reference
-- [init6](https://github.com/init6) — inspiration for modular architecture and code cleanliness
+- [init6](https://github.com/fjaros/init6) — inspiration for modular architecture and code cleanliness
