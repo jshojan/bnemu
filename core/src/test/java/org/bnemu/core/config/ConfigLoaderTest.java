@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigLoaderTest {
-
+    
     @Test
     public void testLoadConfig() throws Exception {
         CoreConfig config = ConfigLoader.load("config.yml");
