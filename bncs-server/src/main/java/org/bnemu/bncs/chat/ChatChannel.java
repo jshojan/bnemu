@@ -93,7 +93,7 @@ public class ChatChannel {
                 int acc = 0x0BADF00D;
                 int reg = 0x0BADF00D;
                 BncsPacket packet = ChatEventBuilder.build(eid, flags, ping, ip, acc, reg, user, text);
-                ch.writeAndFlush(packet.retainedDuplicate());
+                ch.writeAndFlush(packet.duplicate());
             }
         }
     }

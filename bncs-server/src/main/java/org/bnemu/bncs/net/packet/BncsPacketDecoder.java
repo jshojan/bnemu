@@ -60,7 +60,7 @@ public class BncsPacketDecoder extends ByteToMessageDecoder {
             logger.debug("Decoded BNCS packet: ID=0x{} Length={} PayloadSize={}",
                     String.format("%02X", packetId), length, payload.readableBytes());
 
-            out.add(new BncsPacket(packetId, payload));
+            out.add(new BncsPacket(BncsPacketId.fromCode(packetId), new BncsPacketBuffer(payload)));
         }
     }
 }

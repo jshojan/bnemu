@@ -1,11 +1,10 @@
 package org.bnemu.bncs.handler;
 
+import io.netty.channel.ChannelHandlerContext;
 import org.bnemu.bncs.chat.ChatChannelManager;
 import org.bnemu.bncs.net.packet.BncsPacket;
 import org.bnemu.core.dao.AccountDao;
-import org.bnemu.bncs.net.packet.BncsPacketHandler;
 import org.bnemu.core.session.SessionManager;
-import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +20,7 @@ public class BncsDispatcher {
     private final SessionManager sessions;
     private final ChatChannelManager channelManager;
 
-    // ✅ Full constructor (used by production)
+    // production
     public BncsDispatcher(AccountDao accountDao, SessionManager sessions, ChatChannelManager channelManager) {
         this.accountDao = accountDao;
         this.sessions = sessions;
@@ -29,7 +28,7 @@ public class BncsDispatcher {
         registerDefaults();
     }
 
-    // ✅ Safe fallback constructor (legacy/test mode)
+    // legacy/test mode
     public BncsDispatcher(AccountDao accountDao, SessionManager sessions, boolean skipDefaults) {
         this.accountDao = accountDao;
         this.sessions = sessions;
@@ -49,7 +48,7 @@ public class BncsDispatcher {
         register(new PingHandler());
         register(new LogonResponse2Handler(accountDao, sessions));
         register(new CreateAccount2Handler(accountDao));
-        register(new GetChannelListHandler(sessions));
+        register(new GetChannelListHandler());
 
         // Only register JoinChannelHandler if channelManager is available
         if (channelManager != null) {
@@ -58,19 +57,15 @@ public class BncsDispatcher {
     }
 
     public void register(BncsPacketHandler handler) {
-        for (int id = 0; id <= 0xFF; id++) {
-            if (handler.supports((byte) id)) {
-                handlers.put((byte) id, handler);
-            }
-        }
+        handlers.put(handler.bncsPacketId().getCode(), handler);
     }
 
     public void dispatch(ChannelHandlerContext ctx, BncsPacket packet) {
-        BncsPacketHandler handler = handlers.get(packet.getCommand());
+        BncsPacketHandler handler = handlers.get(packet.packetId().getCode());
         if (handler != null) {
             handler.handle(ctx, packet);
         } else {
-            logger.debug("No handler found for packet ID: 0x{}", String.format("%02X", packet.getCommand()));
+            logger.debug("No handler found for packet ID: 0x{}", String.format("%02X", packet.packetId().getCode()));
         }
     }
 }

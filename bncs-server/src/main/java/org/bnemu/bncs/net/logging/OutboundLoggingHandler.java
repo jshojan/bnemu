@@ -12,9 +12,8 @@ public class OutboundLoggingHandler extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        if (msg instanceof BncsPacket) {
-            BncsPacket packet = (BncsPacket) msg;
-            logger.debug("Outbound packet sent: 0x{}", String.format("%02X", packet.getCommand()));
+        if (msg instanceof BncsPacket packet) {
+            logger.debug("Outbound packet sent: 0x{}", String.format("%02X", packet.packetId().getCode()));
         }
         super.write(ctx, msg, promise);
     }

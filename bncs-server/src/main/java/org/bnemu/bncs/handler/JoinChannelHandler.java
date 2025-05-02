@@ -1,11 +1,9 @@
 package org.bnemu.bncs.handler;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import org.bnemu.bncs.chat.ChatChannel;
 import org.bnemu.bncs.chat.ChatChannelManager;
 import org.bnemu.bncs.net.packet.BncsPacket;
-import org.bnemu.bncs.net.packet.BncsPacketHandler;
 import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.session.SessionManager;
 import org.slf4j.Logger;
@@ -22,56 +20,42 @@ public class JoinChannelHandler implements BncsPacketHandler {
     }
 
     @Override
-    public boolean supports(byte packetId) {
-        return packetId == BncsPacketId.SID_JOINCHANNEL;
+    public BncsPacketId bncsPacketId() {
+        return BncsPacketId.SID_JOINCHANNEL;
     }
 
     @Override
     public void handle(ChannelHandlerContext ctx, BncsPacket packet) {
-        String sessionUsername = sessions.getUsername(ctx.channel());
-        if (sessionUsername == null) {
+        String username = sessions.getUsername(ctx.channel());
+        if (username == null) {
             logger.warn("JoinChannelHandler: Session username is null. User may not be logged in.");
             return;
         }
 
-        ByteBuf buf = packet.getPayload();
-        if (buf.readableBytes() < 6) {
-            logger.warn("JoinChannelHandler: Not enough bytes in payload.");
-            return;
+        var byteBuf = packet.payload().getBuf();
+        StringBuilder hexString = new StringBuilder();
+        for (int i = byteBuf.readerIndex(); i < byteBuf.writerIndex(); i++) {
+            hexString.append(String.format("%02X ", byteBuf.getUnsignedByte(i)));
         }
+        String formattedHex = hexString.toString().trim();
+        logger.debug(formattedHex);
 
-        int flags = buf.readIntLE();
-        String clientTag = readCString(buf);
-        String accountNameFromClient = readCString(buf);
-        String channelName = readCString(buf);
-
-        // Prefer the account name from client if it’s valid
-        String username = (accountNameFromClient != null && !accountNameFromClient.isBlank())
-                ? accountNameFromClient
-                : sessionUsername;
-
-        logger.debug("[JoinChannel] Flags: {}, ClientTag: '{}', AccountFromClient: '{}', ChannelName: '{}', UsingUsername: '{}'",
-                flags, clientTag, accountNameFromClient, channelName, username);
+        var input = packet.payload().skipBytes(4);
+//        var flags = input.readDword();
+        var channelName = input.readString();
 
         if (channelName == null || channelName.isEmpty()) {
             channelName = "The Void";
         }
 
+        logger.debug(channelName);
+        logger.debug(channelName);
+        logger.debug(channelName);
+
         sessions.set(ctx.channel(), "channel", channelName);
-        sessions.set(ctx.channel(), "clientTag", clientTag);
-        sessions.set(ctx.channel(), "username", username);  // <- use this username going forward
+        sessions.set(ctx.channel(), "username", username);
 
         ChatChannel channel = channelManager.getOrCreateChannel(channelName);
         channel.addMember(ctx.channel(), username);
-    }
-
-    private String readCString(ByteBuf buf) {
-        StringBuilder sb = new StringBuilder();
-        while (buf.isReadable()) {
-            byte b = buf.readByte();
-            if (b == 0x00) break;
-            sb.append((char) b);
-        }
-        return sb.toString();
     }
 }

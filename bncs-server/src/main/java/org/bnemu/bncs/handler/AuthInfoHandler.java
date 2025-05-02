@@ -1,49 +1,44 @@
 package org.bnemu.bncs.handler;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import org.bnemu.bncs.net.packet.BncsPacket;
-import org.bnemu.bncs.net.packet.BncsPacketHandler;
+import org.bnemu.bncs.net.packet.BncsPacketBuffer;
 import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.session.SessionManager;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 public class AuthInfoHandler implements BncsPacketHandler {
     private static final int LOGON_TYPE = 0; // 0 = Broken SHA-1 (default for StarCraft)
     private static final String MPQ_FILENAME = "ver-IX86-0.mpq";
     private static final String CHECK_REVISION_FORMULA = "A=125933019 B=665814511 C=736475113 4 A=A+S B=B^C C=C^A A=A^B";
-    private final SessionManager sessionManager;
     private static final Random RANDOM = new Random();
+    private final SessionManager sessionManager;
 
     public AuthInfoHandler(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
     }
 
     @Override
-    public boolean supports(byte packetId) {
-        return packetId == BncsPacketId.SID_AUTH_INFO;
+    public BncsPacketId bncsPacketId() {
+        return BncsPacketId.SID_AUTH_INFO;
     }
 
     @Override
     public void handle(ChannelHandlerContext ctx, BncsPacket packet) {
-        int serverToken = RANDOM.nextInt() & 0x7FFFFFFF; // Generate a positive 32-bit server token
-        sessionManager.set(ctx.channel(), "serverToken", String.valueOf(serverToken)); // Store it
+        // TODO: this should increment from 1 for every login to the server
+        int serverToken = RANDOM.nextInt() & 0x7FFFFFFF;
+        sessionManager.set(ctx.channel(), "serverToken", String.valueOf(serverToken));
 
-        ByteBuf out = Unpooled.buffer();
-        out.writeIntLE(LOGON_TYPE);
-        out.writeIntLE(serverToken);
-        out.writeIntLE(0x02C9); // UDP value (not important, nonzero)
-        out.writeIntLE(0); // FILETIME low
-        out.writeIntLE(0); // FILETIME high
+        var output = new BncsPacketBuffer()
+                .writeDword(LOGON_TYPE)
+                .writeDword(serverToken)
+                .writeDword(0x02C9)
+                .writeDword(0x00)
+                .writeDword(0x00)
+                .writeString(MPQ_FILENAME)
+                .writeString(CHECK_REVISION_FORMULA);
 
-        out.writeBytes(MPQ_FILENAME.getBytes(StandardCharsets.US_ASCII));
-        out.writeByte(0x00);
-        out.writeBytes(CHECK_REVISION_FORMULA.getBytes(StandardCharsets.US_ASCII));
-        out.writeByte(0x00);
-
-        ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_AUTH_INFO, out));
+        ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_AUTH_INFO, output));
     }
 }
