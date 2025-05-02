@@ -7,9 +7,6 @@ import io.netty.handler.codec.MessageToByteEncoder;
 public class BncsPacketEncoder extends MessageToByteEncoder<BncsPacket> {
     @Override
     protected void encode(ChannelHandlerContext ctx, BncsPacket msg, ByteBuf out) {
-        out.writeByte(0xFF);
-        out.writeByte(msg.getCommand());
-        out.writeShortLE(msg.getLength());
-        out.writeBytes(msg.getPayload());
+        out.writeBytes(msg.payload().withHeader(msg.packetId()));
     }
 }

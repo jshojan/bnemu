@@ -1,12 +1,11 @@
 package org.bnemu.bncs.handler;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import org.bnemu.bncs.net.packet.BncsPacket;
+import org.bnemu.bncs.net.packet.BncsPacketBuffer;
+import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.dao.AccountDao;
 import org.bnemu.core.model.Account;
-import org.bnemu.bncs.net.packet.BncsPacketHandler;
-import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.session.SessionManager;
 import org.bnemu.crypto.BrokenSHA1;
 
@@ -25,37 +24,26 @@ public class LogonResponse2Handler implements BncsPacketHandler {
     }
 
     @Override
-    public boolean supports(byte packetId) {
-        return packetId == BncsPacketId.SID_LOGONRESPONSE2;
+    public BncsPacketId bncsPacketId() {
+        return BncsPacketId.SID_LOGONRESPONSE2;
     }
 
     @Override
     public void handle(ChannelHandlerContext ctx, BncsPacket packet) {
-        ByteBuf buf = packet.getPayload();
+        var input = packet.payload();
+        var clientToken = input.readDword();
+        var serverToken = input.readDword();
+        var clientProof = input.readBytes(20);
+        var username = input.readString();
 
-        int clientToken = buf.readIntLE();
-        int serverToken = buf.readIntLE(); // Still read it for compatibility (ignore after)
-
-        byte[] clientProof = new byte[20];
-        buf.readBytes(clientProof);
-
-        int usernameStartIndex = buf.readerIndex();
-        int usernameLength = buf.readableBytes();
-        byte[] rawUsernameBytes = new byte[usernameLength];
-        buf.getBytes(usernameStartIndex, rawUsernameBytes);
-        System.out.println("[LOGIN] Raw username bytes: " + Arrays.toString(rawUsernameBytes));
-
-        String username = readCString(buf);
         String usernameLower = username.toLowerCase();
 
         int statusCode;
         Account account = accountDao.findAccount(usernameLower);
         if (account == null) {
-            statusCode = 0x01; // Account does not exist
+            statusCode = 0x01;
         } else {
             byte[] storedHash = account.getPasswordHashBytes();
-
-            // Force serverToken to 0 for proof calculation
             byte[] expectedProof = computeProof(clientToken, serverToken, storedHash);
 
             System.out.println("[LOGIN] Stored passwordHash: " + Arrays.toString(storedHash));
@@ -65,34 +53,20 @@ public class LogonResponse2Handler implements BncsPacketHandler {
             System.out.println("[LOGIN] (IGNORING) ServerToken sent by client: " + serverToken);
 
             if (MessageDigest.isEqual(expectedProof, clientProof)) {
-                statusCode = 0x00; // Success
+                statusCode = 0x00;
                 sessionManager.setUsername(ctx.channel(), usernameLower);
                 sessionManager.markAuthenticated(ctx.channel());
             } else {
-                statusCode = 0x02; // Invalid password
+                statusCode = 0x02;
             }
         }
 
         sendLoginResponse(ctx, statusCode);
     }
 
-
     private void sendLoginResponse(ChannelHandlerContext ctx, int statusCode) {
-        ByteBuf out = ctx.alloc().buffer(4);
-        out.writeIntLE(statusCode);
-        ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_LOGONRESPONSE2, out));
-    }
-
-    private String readCString(ByteBuf buf) {
-        StringBuilder sb = new StringBuilder();
-        while (buf.isReadable()) {
-            byte b = buf.readByte();
-            if (b == 0x00) break;
-            if (b >= 32 && b <= 126) {
-                sb.append((char) b);
-            }
-        }
-        return sb.toString();
+        var output = new BncsPacketBuffer().writeDword(statusCode);
+        ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_LOGONRESPONSE2, output));
     }
 
     private byte[] computeProof(int clientToken, int serverToken, byte[] passwordHash) {
@@ -100,7 +74,7 @@ public class LogonResponse2Handler implements BncsPacketHandler {
         buf.putInt(clientToken);
         buf.putInt(serverToken);
         buf.put(passwordHash);
-        buf.put((byte)0);
+        buf.put((byte) 0);
 
         byte[] inputArray = buf.array();
         System.out.println("[DEBUG] Hashing input bytes: " + Arrays.toString(inputArray));

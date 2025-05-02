@@ -1,9 +1,9 @@
 package org.bnemu.core.net.packet;
 
-import io.netty.buffer.ByteBuf;
+public interface Packet<A, B extends PacketBuffer<A, B>> {
+    A packetId();
 
-public interface Packet {
-    byte getCommand();
-    ByteBuf getPayload();
+    B payload();
+
     int getLength();
 }

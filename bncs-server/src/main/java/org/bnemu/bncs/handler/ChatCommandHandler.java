@@ -6,13 +6,11 @@ import org.bnemu.bncs.chat.ChatChannelManager;
 import org.bnemu.bncs.chat.ChatEventIds;
 import org.bnemu.bncs.chat.WhisperManager;
 import org.bnemu.bncs.net.packet.BncsPacket;
-import org.bnemu.bncs.net.packet.BncsPacketHandler;
 import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.session.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 public class ChatCommandHandler implements BncsPacketHandler {
@@ -29,8 +27,8 @@ public class ChatCommandHandler implements BncsPacketHandler {
     }
 
     @Override
-    public boolean supports(byte packetId) {
-        return packetId == BncsPacketId.SID_CHATCOMMAND;
+    public BncsPacketId bncsPacketId() {
+        return BncsPacketId.SID_CHATCOMMAND;
     }
 
     @Override
@@ -39,12 +37,10 @@ public class ChatCommandHandler implements BncsPacketHandler {
         String currentChannel = sessions.get(ctx.channel(), "channel");
 
         if (username == null) {
-            return; // Not logged in
+            return;
         }
 
-        byte[] messageBytes = new byte[packet.getPayload().readableBytes()];
-        packet.getPayload().readBytes(messageBytes);
-        String message = new String(messageBytes, StandardCharsets.US_ASCII).trim();
+        var message = packet.payload().readString();
 
         logger.debug("Received chat command: '{}'", message);
 

@@ -11,9 +11,8 @@ public class InboundLoggingHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof BncsPacket) {
-            BncsPacket packet = (BncsPacket) msg;
-            logger.debug("Inbound packet received: 0x{}", String.format("%02X", packet.getCommand()));
+        if (msg instanceof BncsPacket packet) {
+            logger.debug("Inbound packet received: 0x{}", String.format("%02X", packet.packetId().getCode()));
         }
         super.channelRead(ctx, msg);
     }
