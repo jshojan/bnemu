@@ -6,7 +6,7 @@ import org.bnemu.bncs.net.packet.BncsPacketBuffer;
 import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.dao.AccountDao;
 
-public class CreateAccount2Handler implements BncsPacketHandler {
+public class CreateAccount2Handler extends BncsPacketHandler {
     private final AccountDao accountDao;
 
     public CreateAccount2Handler(AccountDao accountDao) {
@@ -27,13 +27,9 @@ public class CreateAccount2Handler implements BncsPacketHandler {
         String usernameLower = username.toLowerCase();
         boolean created = accountDao.createAccount(usernameLower, passwordHash);
 
-        sendResponse(ctx, created ? 0x00 : 0x05, "");
-    }
-
-    private void sendResponse(ChannelHandlerContext ctx, int status, String suggestion) {
         var output = new BncsPacketBuffer()
-                .writeDword(status)
-                .writeString(suggestion);
-        ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_CREATEACCOUNT2, output));
+                .writeDword(created ? 0x00 : 0x05)
+                .writeString("");
+        send(ctx, output);
     }
 }

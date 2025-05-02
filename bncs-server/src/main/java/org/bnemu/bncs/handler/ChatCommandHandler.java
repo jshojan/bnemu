@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
-public class ChatCommandHandler implements BncsPacketHandler {
+public class ChatCommandHandler extends BncsPacketHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ChatCommandHandler.class);
     private final SessionManager sessions;
