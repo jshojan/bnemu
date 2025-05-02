@@ -43,7 +43,7 @@ public class BncsDispatcher {
         register(new AccountLogonProofHandler(accountDao, sessions));
         register(new AuthInfoHandler(sessions));
         register(new AuthCheckHandler(sessions));
-        register(new EnterChatHandler(sessions));
+        register(new EnterChatHandler());
         register(new ChatCommandHandler(sessions, channelManager));
         register(new PingHandler());
         register(new LogonResponse2Handler(accountDao, sessions));

@@ -41,21 +41,21 @@ public class JoinChannelHandler extends BncsPacketHandler {
         logger.debug(formattedHex);
 
         var input = packet.payload().skipBytes(4);
-//        var flags = input.readDword();
+        var flags = input.readDword();
         var channelName = input.readString();
 
         if (channelName == null || channelName.isEmpty()) {
             channelName = "The Void";
         }
 
-        logger.debug(channelName);
-        logger.debug(channelName);
-        logger.debug(channelName);
-
-        sessions.set(ctx.channel(), "channel", channelName);
-        sessions.set(ctx.channel(), "username", username);
-
-        ChatChannel channel = channelManager.getOrCreateChannel(channelName);
-        channel.addMember(ctx.channel(), username);
+        if (flags == 0) {
+            ChatChannel channel = channelManager.getOrCreateChannel(channelName);
+            channel.addMember(ctx.channel(), username);
+        } else {
+            sessions.set(ctx.channel(), "channel", channelName);
+            sessions.set(ctx.channel(), "username", username);
+            ChatChannel channel = channelManager.getOrCreateChannel(channelName);
+            channel.addMember(ctx.channel(), username);
+        }
     }
 }
