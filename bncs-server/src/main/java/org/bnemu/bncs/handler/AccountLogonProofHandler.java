@@ -1,6 +1,5 @@
 package org.bnemu.bncs.handler;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import org.bnemu.bncs.net.packet.BncsPacket;
 import org.bnemu.bncs.net.packet.BncsPacketBuffer;
@@ -10,7 +9,7 @@ import org.bnemu.core.session.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AccountLogonProofHandler implements BncsPacketHandler {
+public class AccountLogonProofHandler extends BncsPacketHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(AccountLogonProofHandler.class);
     private final AccountDao accountDao;
@@ -41,17 +40,8 @@ public class AccountLogonProofHandler implements BncsPacketHandler {
         }
         logger.debug("Login attempt for {} verified: {}", username, verified);
 
-        var output = new BncsPacketBuffer();
-        output.writeByte(verified ? 0x00 : 0x01);
-        ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_AUTH_ACCOUNTLOGONPROOF, output));
-    }
-
-    private String readNullTerminatedString(ByteBuf buf) {
-        StringBuilder sb = new StringBuilder();
-        byte b;
-        while (buf.isReadable() && (b = buf.readByte()) != 0x00) {
-            sb.append((char) b);
-        }
-        return sb.toString();
+        var output = new BncsPacketBuffer()
+                .writeByte(verified ? 0x00 : 0x01);
+        send(ctx, output);
     }
 }

@@ -9,7 +9,7 @@ import org.bnemu.core.session.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JoinChannelHandler implements BncsPacketHandler {
+public class JoinChannelHandler extends BncsPacketHandler {
     private static final Logger logger = LoggerFactory.getLogger(JoinChannelHandler.class);
     private final SessionManager sessions;
     private final ChatChannelManager channelManager;

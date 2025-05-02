@@ -8,7 +8,7 @@ import org.bnemu.core.session.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AccountLogonHandler implements BncsPacketHandler {
+public class AccountLogonHandler extends BncsPacketHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(AccountLogonHandler.class);
     private final SessionManager sessions;
@@ -28,7 +28,9 @@ public class AccountLogonHandler implements BncsPacketHandler {
         var username = packet.payload().readString();
         sessions.set(ctx.channel(), "username", username);
         logger.debug("Session created for account '{}', channel: {}", username, ctx.channel().id());
-        var output = new BncsPacketBuffer().writeByte(0x00);
-        ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_AUTH_ACCOUNTLOGONPROOF, output));
+        
+        var output = new BncsPacketBuffer()
+                .writeByte(0x00);
+        send(ctx, output);
     }
 }

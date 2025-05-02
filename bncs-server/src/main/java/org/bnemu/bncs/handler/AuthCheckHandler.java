@@ -6,7 +6,7 @@ import org.bnemu.bncs.net.packet.BncsPacketBuffer;
 import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.session.SessionManager;
 
-public class AuthCheckHandler implements BncsPacketHandler {
+public class AuthCheckHandler extends BncsPacketHandler {
     private final SessionManager sessionManager;
 
     public AuthCheckHandler(SessionManager sessionManager) {
@@ -28,7 +28,6 @@ public class AuthCheckHandler implements BncsPacketHandler {
         var output = new BncsPacketBuffer()
                 .writeDword(0x00)
                 .writeByte(0x00);
-
-        ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_AUTH_CHECK, output));
+        send(ctx, output);
     }
 }
