@@ -3,6 +3,8 @@ package org.bnemu.bncs.handler;
 import io.netty.channel.ChannelHandlerContext;
 import org.bnemu.bncs.chat.ChatChannel;
 import org.bnemu.bncs.chat.ChatChannelManager;
+import org.bnemu.bncs.chat.ChatEventBuilder;
+import org.bnemu.bncs.chat.ChatEventIds;
 import org.bnemu.bncs.net.packet.BncsPacket;
 import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.session.SessionManager;
@@ -32,15 +34,7 @@ public class JoinChannelHandler extends BncsPacketHandler {
             return;
         }
 
-        var byteBuf = packet.payload().getBuf();
-        StringBuilder hexString = new StringBuilder();
-        for (int i = byteBuf.readerIndex(); i < byteBuf.writerIndex(); i++) {
-            hexString.append(String.format("%02X ", byteBuf.getUnsignedByte(i)));
-        }
-        String formattedHex = hexString.toString().trim();
-        logger.debug(formattedHex);
-
-        var input = packet.payload().skipBytes(4);
+        var input = packet.payload();
         var flags = input.readDword();
         var channelName = input.readString();
 
@@ -49,9 +43,20 @@ public class JoinChannelHandler extends BncsPacketHandler {
         }
 
         if (flags == 0) {
-            ChatChannel channel = channelManager.getOrCreateChannel(channelName);
-            channel.addMember(ctx.channel(), username);
+            logger.debug("zero");
+            var output = ChatEventBuilder.build(
+                ChatEventIds.EID_CHANNELDOESNOTEXIST,
+                0,
+                0,
+                0,
+                0,
+                0,
+                channelName,
+                null
+            );
+            send(ctx, BncsPacketId.SID_CHATEVENT, output);
         } else {
+            logger.debug("non-zero");
             sessions.set(ctx.channel(), "channel", channelName);
             sessions.set(ctx.channel(), "username", username);
             ChatChannel channel = channelManager.getOrCreateChannel(channelName);

@@ -28,9 +28,9 @@ public class AccountLogonHandler extends BncsPacketHandler {
         var username = packet.payload().readString();
         sessions.set(ctx.channel(), "username", username);
         logger.debug("Session created for account '{}', channel: {}", username, ctx.channel().id());
-        
+
         var output = new BncsPacketBuffer()
-                .writeByte(0x00);
+            .writeByte(0x00);
         send(ctx, output);
     }
 }

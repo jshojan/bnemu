@@ -35,7 +35,7 @@ public class LogonResponse2Handler extends BncsPacketHandler {
         var serverToken = input.readDword();
         var clientProof = input.readBytes(20);
         var username = input.readString();
-
+ 
         String usernameLower = username.toLowerCase();
 
         int statusCode;

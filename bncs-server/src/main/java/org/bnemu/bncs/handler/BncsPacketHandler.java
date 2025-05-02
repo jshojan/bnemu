@@ -13,4 +13,8 @@ public abstract class BncsPacketHandler {
     protected void send(ChannelHandlerContext ctx, BncsPacketBuffer buffer) {
         ctx.writeAndFlush(new BncsPacket(bncsPacketId(), buffer));
     }
+
+    protected void send(ChannelHandlerContext ctx, BncsPacketId id, BncsPacketBuffer buffer) {
+        ctx.writeAndFlush(new BncsPacket(id, buffer));
+    }
 }

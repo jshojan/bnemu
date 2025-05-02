@@ -17,9 +17,9 @@ public class GetChannelListHandler extends BncsPacketHandler {
 //        var productId = input.readBytes(4);
 
         var output = new BncsPacketBuffer()
-                .writeString("bnemu")
-                .writeString("The Void")
-                .writeString("");
+            .writeString("bnemu")
+            .writeString("The Void")
+            .writeString("");
 
         ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_GETCHANNELLIST, output));
     }

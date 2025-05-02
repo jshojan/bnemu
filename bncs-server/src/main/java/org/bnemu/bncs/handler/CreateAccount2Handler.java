@@ -28,8 +28,8 @@ public class CreateAccount2Handler extends BncsPacketHandler {
         boolean created = accountDao.createAccount(usernameLower, passwordHash);
 
         var output = new BncsPacketBuffer()
-                .writeDword(created ? 0x00 : 0x05)
-                .writeString("");
+            .writeDword(created ? 0x00 : 0x05)
+            .writeString("");
         send(ctx, output);
     }
 }

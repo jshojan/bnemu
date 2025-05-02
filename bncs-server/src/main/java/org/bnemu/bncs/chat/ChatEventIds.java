@@ -1,5 +1,6 @@
 package org.bnemu.bncs.chat;
 
+// TODO: turn this into an enum like BncsPacketId
 public class ChatEventIds {
     public static final int EID_SHOWUSER = 0x01;
     public static final int EID_JOIN = 0x02;
@@ -11,6 +12,7 @@ public class ChatEventIds {
     public static final int EID_BROADCAST = 0x06;
     public static final int EID_USERFLAGS = 0x09;
     public static final int EID_INFO = 0x12;
+    public static final int EID_CHANNELDOESNOTEXIST = 0x0E;
 
     private ChatEventIds() {
         // Prevent instantiation

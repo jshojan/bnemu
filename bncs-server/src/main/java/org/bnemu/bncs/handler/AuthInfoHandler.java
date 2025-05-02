@@ -31,13 +31,13 @@ public class AuthInfoHandler extends BncsPacketHandler {
         sessionManager.set(ctx.channel(), "serverToken", String.valueOf(serverToken));
 
         var output = new BncsPacketBuffer()
-                .writeDword(LOGON_TYPE)
-                .writeDword(serverToken)
-                .writeDword(0x02C9)
-                .writeDword(0x00)
-                .writeDword(0x00)
-                .writeString(MPQ_FILENAME)
-                .writeString(CHECK_REVISION_FORMULA);
+            .writeDword(LOGON_TYPE)
+            .writeDword(serverToken)
+            .writeDword(0x02C9)
+            .writeDword(0x00)
+            .writeDword(0x00)
+            .writeString(MPQ_FILENAME)
+            .writeString(CHECK_REVISION_FORMULA);
         send(ctx, output);
     }
 }

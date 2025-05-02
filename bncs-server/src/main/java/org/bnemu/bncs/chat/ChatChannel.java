@@ -2,6 +2,7 @@ package org.bnemu.bncs.chat;
 
 import io.netty.channel.Channel;
 import org.bnemu.bncs.net.packet.BncsPacket;
+import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.session.SessionManager;
 
 import java.util.HashSet;
@@ -24,10 +25,11 @@ public class ChatChannel {
             if (!existing.equals(newChannel) && existing.isActive()) {
                 String otherUser = sessionManager.get(existing, "username");
                 if (otherUser != null) {
-                    BncsPacket showUser = ChatEventBuilder.build(
-                            ChatEventIds.EID_SHOWUSER, 0, 0, 0, 0, 0, otherUser, null
+                    var showUser = ChatEventBuilder.build(
+                        ChatEventIds.EID_SHOWUSER, 0, 0, 0, 0, 0, otherUser, null
                     );
-                    newChannel.writeAndFlush(showUser);
+                    var output = new BncsPacket(BncsPacketId.SID_CHATEVENT, showUser);
+                    newChannel.writeAndFlush(output);
                 }
             }
         }
@@ -35,10 +37,11 @@ public class ChatChannel {
         // Notify existing users that the new user joined (EID_JOIN)
         for (Channel ch : members) {
             if (!ch.equals(newChannel) && ch.isActive()) {
-                BncsPacket joinNotify = ChatEventBuilder.build(
-                        ChatEventIds.EID_JOIN, 0, 0, 0, 0, 0, username, null
+                var joinNotify = ChatEventBuilder.build(
+                    ChatEventIds.EID_JOIN, 0, 0, 0, 0, 0, username, null
                 );
-                ch.writeAndFlush(joinNotify);
+                var output = new BncsPacket(BncsPacketId.SID_CHATEVENT, joinNotify);
+                ch.writeAndFlush(output);
             }
         }
 
@@ -48,16 +51,18 @@ public class ChatChannel {
         sessionManager.set(newChannel, "username", username);
 
         // Send EID_SHOWUSER to the new user for themselves
-        BncsPacket showSelf = ChatEventBuilder.build(
-                ChatEventIds.EID_SHOWUSER, 0, 0, 0, 0, 0, username, null
+        var showSelf = ChatEventBuilder.build(
+            ChatEventIds.EID_SHOWUSER, 0, 0, 0, 0, 0, username, null
         );
-        newChannel.writeAndFlush(showSelf);
+        var output1 = new BncsPacket(BncsPacketId.SID_CHATEVENT, showSelf);
+        newChannel.writeAndFlush(output1);
 
         // Send EID_CHANNEL message
-        BncsPacket channelInfo = ChatEventBuilder.build(
-                ChatEventIds.EID_CHANNEL, 0, 0, 0, 0, 0, username, name
+        var channelInfo = ChatEventBuilder.build(
+            ChatEventIds.EID_CHANNEL, 0, 0, 0, 0, 0, username, name
         );
-        newChannel.writeAndFlush(channelInfo);
+        var output2 = new BncsPacket(BncsPacketId.SID_CHATEVENT, channelInfo);
+        newChannel.writeAndFlush(output2);
 
         // Welcome message
         sendSystemMessage(newChannel, "Welcome to " + name + "\nEnjoy chatting!");
@@ -92,18 +97,22 @@ public class ChatChannel {
                 int ip = 0x00000000;
                 int acc = 0x0BADF00D;
                 int reg = 0x0BADF00D;
-                BncsPacket packet = ChatEventBuilder.build(eid, flags, ping, ip, acc, reg, user, text);
-                ch.writeAndFlush(packet.duplicate());
+                var packet = ChatEventBuilder.build(eid, flags, ping, ip, acc, reg, user, text);
+                var output = new BncsPacket(BncsPacketId.SID_CHATEVENT, packet);
+                // TODO: do we really need to dupe these?
+                ch.writeAndFlush(output.duplicate());
             }
         }
     }
 
     public void sendSystemMessage(Channel target, String message) {
         if (target.isActive()) {
-            BncsPacket packet = ChatEventBuilder.build(
-                    ChatEventIds.EID_BROADCAST, 0, 0, 0, 0, 0, "Battle.net", message
+            var packet = ChatEventBuilder.build(
+                ChatEventIds.EID_BROADCAST, 0, 0, 0, 0, 0, "Battle.net", message
             );
-            target.writeAndFlush(packet);
+            var output = new BncsPacket(BncsPacketId.SID_CHATEVENT, packet);
+            // TODO: ...because we aren't here
+            target.writeAndFlush(output);
         }
     }
 
@@ -111,10 +120,11 @@ public class ChatChannel {
         if (target.isActive()) {
             String username = sessionManager.get(target, "username");
             if (username == null) username = "Battle.net";
-            BncsPacket packet = ChatEventBuilder.build(
-                    ChatEventIds.EID_INFO, 0, 0, 0, 0, 0, username, message
+            var packet = ChatEventBuilder.build(
+                ChatEventIds.EID_INFO, 0, 0, 0, 0, 0, username, message
             );
-            target.writeAndFlush(packet);
+            var output = new BncsPacket(BncsPacketId.SID_CHATEVENT, packet);
+            target.writeAndFlush(output);
         }
     }
 }

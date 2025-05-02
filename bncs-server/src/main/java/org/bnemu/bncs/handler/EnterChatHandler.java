@@ -23,9 +23,9 @@ public class EnterChatHandler extends BncsPacketHandler {
         }
 
         var output = new BncsPacketBuffer()
-                .writeString(username)
-                .writeString("RATS 0 0 0 0 0 0 0 0 RATS")
-                .writeString(username);
+            .writeString(username)
+            .writeString("RATS 0 0 0 0 0 0 0 0 RATS")
+            .writeString(username);
         send(ctx, output);
     }
 }
