@@ -3,7 +3,7 @@ package org.bnemu.core.net.packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-public abstract class PacketBuffer<B, A extends PacketBuffer<B, A>> {
+public abstract class PacketBuffer<A, B extends PacketBuffer<A, B>> {
     protected ByteBuf buf;
 
     public PacketBuffer() {
@@ -26,37 +26,37 @@ public abstract class PacketBuffer<B, A extends PacketBuffer<B, A>> {
         return buf.readableBytes();
     }
 
-    protected abstract A self();
+    protected abstract B self();
 
-    public abstract ByteBuf withHeader(B id);
+    public abstract ByteBuf withHeader(A id);
 
-    public A writeByte(byte b) {
+    public B writeByte(byte b) {
         buf.writeByte(b);
         return self();
     }
 
-    public A writeByte(int b) {
+    public B writeByte(int b) {
         buf.writeByte((byte) b);
         return self();
     }
 
-    public A writeWord(short s) {
+    public B writeWord(short s) {
         buf.writeShortLE(s);
         return self();
     }
 
-    public A writeDword(int i) {
+    public B writeDword(int i) {
         buf.writeIntLE(i);
         return self();
     }
 
-    public A writeString(String s) {
+    public B writeString(String s) {
         buf.writeBytes(s.getBytes());
         buf.writeByte((byte) 0x00);
         return self();
     }
 
-    public A writeBytes(byte[] b) {
+    public B writeBytes(byte[] b) {
         buf.writeBytes(b);
         return self();
     }
@@ -90,7 +90,7 @@ public abstract class PacketBuffer<B, A extends PacketBuffer<B, A>> {
         return builder.toString();
     }
 
-    public A skipBytes(int n) {
+    public B skipBytes(int n) {
         buf.skipBytes(n);
         return self();
     }
