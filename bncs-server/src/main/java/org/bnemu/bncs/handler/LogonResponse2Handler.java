@@ -14,7 +14,7 @@ import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
-public class LogonResponse2Handler implements BncsPacketHandler {
+public class LogonResponse2Handler extends BncsPacketHandler {
     private final AccountDao accountDao;
     private final SessionManager sessionManager;
 

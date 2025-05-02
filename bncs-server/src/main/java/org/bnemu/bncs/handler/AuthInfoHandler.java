@@ -8,7 +8,7 @@ import org.bnemu.core.session.SessionManager;
 
 import java.util.Random;
 
-public class AuthInfoHandler implements BncsPacketHandler {
+public class AuthInfoHandler extends BncsPacketHandler {
     private static final int LOGON_TYPE = 0; // 0 = Broken SHA-1 (default for StarCraft)
     private static final String MPQ_FILENAME = "ver-IX86-0.mpq";
     private static final String CHECK_REVISION_FORMULA = "A=125933019 B=665814511 C=736475113 4 A=A+S B=B^C C=C^A A=A^B";
@@ -38,7 +38,6 @@ public class AuthInfoHandler implements BncsPacketHandler {
                 .writeDword(0x00)
                 .writeString(MPQ_FILENAME)
                 .writeString(CHECK_REVISION_FORMULA);
-
-        ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_AUTH_INFO, output));
+        send(ctx, output);
     }
 }

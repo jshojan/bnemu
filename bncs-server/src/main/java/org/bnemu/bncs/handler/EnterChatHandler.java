@@ -8,7 +8,7 @@ import org.bnemu.core.session.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EnterChatHandler implements BncsPacketHandler {
+public class EnterChatHandler extends BncsPacketHandler {
     private static final Logger logger = LoggerFactory.getLogger(EnterChatHandler.class);
     private final SessionManager sessions;
 
@@ -33,8 +33,10 @@ public class EnterChatHandler implements BncsPacketHandler {
             return;
         }
 
-        // TODO: this is wrong, don't trust the client on this
-//        sessions.setUsername(ctx.channel(), username);
-        logger.debug("EnterChatHandler - Stored username: '{}'", username);
+        var output = new BncsPacketBuffer()
+                .writeString(username)
+                .writeString("RATS")
+                .writeString(username);
+        send(ctx, output);
     }
 }

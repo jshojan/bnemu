@@ -4,7 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 import org.bnemu.bncs.net.packet.BncsPacket;
 import org.bnemu.bncs.net.packet.BncsPacketId;
 
-public class PingHandler implements BncsPacketHandler {
+public class PingHandler extends BncsPacketHandler {
 
     @Override
     public BncsPacketId bncsPacketId() {
