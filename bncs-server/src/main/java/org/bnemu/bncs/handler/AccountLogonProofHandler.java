@@ -41,7 +41,7 @@ public class AccountLogonProofHandler extends BncsPacketHandler {
         logger.debug("Login attempt for {} verified: {}", username, verified);
 
         var output = new BncsPacketBuffer()
-                .writeByte(verified ? 0x00 : 0x01);
+            .writeByte(verified ? 0x00 : 0x01);
         send(ctx, output);
     }
 }

@@ -1,10 +1,7 @@
 package org.bnemu.bncs.handler;
 
 import io.netty.channel.ChannelHandlerContext;
-import org.bnemu.bncs.chat.ChatChannel;
-import org.bnemu.bncs.chat.ChatChannelManager;
-import org.bnemu.bncs.chat.ChatEventIds;
-import org.bnemu.bncs.chat.WhisperManager;
+import org.bnemu.bncs.chat.*;
 import org.bnemu.bncs.net.packet.BncsPacket;
 import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.session.SessionManager;
@@ -89,17 +86,25 @@ public class ChatCommandHandler extends BncsPacketHandler {
             }
 
             if (message.equals("/whoami")) {
-                ChatChannel chan = channelManager.getChannel(currentChannel);
-                if (chan != null) {
-                    chan.sendInfoMessage(ctx.channel(), "You are: " + username);
-                }
+                // TODO: hardcoded values in here for testing
+                var output = ChatEventBuilder.build(
+                    ChatEventIds.EID_INFO,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    "",
+                    "You are " + username + ", using Starcraft in the channel bnemu.");
+                ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_CHATEVENT, output));
                 return;
             }
 
-            ChatChannel chan = channelManager.getChannel(currentChannel);
-            if (chan != null) {
-                chan.sendSystemMessage(ctx.channel(), "Unknown command: " + message);
-            }
+// TODO: currentChannel is null
+//            ChatChannel chan = channelManager.getChannel(currentChannel);
+//            if (chan != null) {
+//                chan.sendSystemMessage(ctx.channel(), "Unknown command: " + message);
+//            }
             return;
         }
 

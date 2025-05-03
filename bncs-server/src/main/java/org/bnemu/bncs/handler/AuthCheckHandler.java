@@ -26,8 +26,8 @@ public class AuthCheckHandler extends BncsPacketHandler {
         sessionManager.set(ctx.channel(), "clientToken", String.valueOf(clientToken));
 
         var output = new BncsPacketBuffer()
-                .writeDword(0x00)
-                .writeByte(0x00);
+            .writeDword(0x00)
+            .writeByte(0x00);
         send(ctx, output);
     }
 }
