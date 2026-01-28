@@ -4,8 +4,15 @@ import io.netty.channel.ChannelHandlerContext;
 import org.bnemu.bncs.net.packet.BncsPacket;
 import org.bnemu.bncs.net.packet.BncsPacketBuffer;
 import org.bnemu.bncs.net.packet.BncsPacketId;
+import org.bnemu.core.session.SessionManager;
 
 public class EnterChatHandler extends BncsPacketHandler {
+    private final SessionManager sessions;
+
+    public EnterChatHandler(SessionManager sessions) {
+        this.sessions = sessions;
+    }
+
     @Override
     public BncsPacketId bncsPacketId() {
         return BncsPacketId.SID_ENTERCHAT;
@@ -22,9 +29,22 @@ public class EnterChatHandler extends BncsPacketHandler {
             return;
         }
 
+        // Get product code from session (set by AuthInfoHandler)
+        String product = sessions.get(ctx.channel(), "product");
+        if (product == null || product.isEmpty()) {
+            product = "RATS"; // Default to StarCraft
+        }
+
+        // Generate statstring - format: "PRODUCT <wins> <losses> <disconnects> <rating> <rank> <high rating> <high rank> <unknown> PRODUCT"
+        String statstring = product + " 0 0 0 0 0 0 0 0 " + product;
+
+        // Store username and statstring in session for use in channel events
+        sessions.setUsername(ctx.channel(), username);
+        sessions.set(ctx.channel(), "statstring", statstring);
+
         var output = new BncsPacketBuffer()
             .writeString(username)
-            .writeString("RATS 0 0 0 0 0 0 0 0 RATS")
+            .writeString(statstring)
             .writeString(username);
         send(ctx, output);
     }

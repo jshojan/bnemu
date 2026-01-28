@@ -26,6 +26,12 @@ public class JoinChannelHandler extends BncsPacketHandler {
         return BncsPacketId.SID_JOINCHANNEL;
     }
 
+    // Join channel flags per BNetDocs specification
+    private static final int FLAG_NOCREATE = 0x00;    // Only join if channel exists and not empty
+    private static final int FLAG_FIRST_JOIN = 0x01;  // Create/join with MOTD
+    private static final int FLAG_FORCED_JOIN = 0x02; // Create/join without MOTD
+    private static final int FLAG_D2_FIRST = 0x05;    // D2 first join (same as 0x01)
+
     @Override
     public void handle(ChannelHandlerContext ctx, BncsPacket packet) {
         String username = sessions.getUsername(ctx.channel());
@@ -42,25 +48,43 @@ public class JoinChannelHandler extends BncsPacketHandler {
             channelName = "The Void";
         }
 
-        if (flags == 0) {
-            logger.debug("zero");
-            var output = ChatEventBuilder.build(
-                ChatEventIds.EID_CHANNELDOESNOTEXIST,
-                0,
-                0,
-                0,
-                0,
-                0,
-                channelName,
-                null
-            );
-            send(ctx, BncsPacketId.SID_CHATEVENT, output);
-        } else {
-            logger.debug("non-zero");
-            sessions.set(ctx.channel(), "channel", channelName);
-            sessions.set(ctx.channel(), "username", username);
-            ChatChannel channel = channelManager.getOrCreateChannel(channelName);
-            channel.addMember(ctx.channel(), username);
+        // Some clients (like StealthBot) send flags=0 with format: Product(4) + Username + Channel
+        // e.g., "PXESleaddark gates" where PXES=product, lead=username, dark gates=channel
+        // We need to parse out the actual channel name
+        if (flags == FLAG_NOCREATE && channelName.length() > 4 + username.length()) {
+            String possibleProduct = channelName.substring(0, 4);
+            // Check if it starts with a known product code pattern (4 uppercase chars or reversed)
+            if (channelName.startsWith(possibleProduct) && channelName.substring(4).startsWith(username)) {
+                // Extract the actual channel name after product + username
+                String actualChannel = channelName.substring(4 + username.length());
+                logger.debug("Parsed extended JoinChannel format: product='{}', username='{}', channel='{}'",
+                    possibleProduct, username, actualChannel);
+                channelName = actualChannel;
+            }
         }
+
+        if (channelName == null || channelName.isEmpty()) {
+            channelName = "The Void";
+        }
+
+        logger.debug("JoinChannel request: flags={}, channel='{}'", flags, channelName);
+
+        if (flags == FLAG_NOCREATE) {
+            // NoCreate join: only join if channel exists and has users
+            ChatChannel existing = channelManager.getChannel(channelName);
+            if (existing == null || existing.getUserCount() == 0) {
+                var output = ChatEventBuilder.build(
+                    ChatEventIds.EID_CHANNELDOESNOTEXIST.getId(),
+                    0, 0, 0, 0, 0,
+                    channelName,
+                    null
+                );
+                send(ctx, BncsPacketId.SID_CHATEVENT, output);
+                return;
+            }
+        }
+
+        // Use joinChannel to properly leave old channel and join new one
+        channelManager.joinChannel(channelName, ctx, username);
     }
 }

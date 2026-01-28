@@ -26,6 +26,22 @@ public class AuthInfoHandler extends BncsPacketHandler {
 
     @Override
     public void handle(ChannelHandlerContext ctx, BncsPacket packet) {
+        var input = packet.payload();
+
+        // Parse client info per BNetDocs SID_AUTH_INFO C->S format
+        int protocolId = input.readDword();      // Protocol ID (0)
+        int platformId = input.readDword();      // Platform ID ("68XI" = IX86)
+        int productId = input.readDword();       // Product ID ("RATS" = STAR, "PXES" = SEXP)
+
+        // Store product code as a 4-character string (bytes are reversed)
+        String productCode = new String(new byte[] {
+            (byte) (productId & 0xFF),
+            (byte) ((productId >> 8) & 0xFF),
+            (byte) ((productId >> 16) & 0xFF),
+            (byte) ((productId >> 24) & 0xFF)
+        });
+        sessionManager.set(ctx.channel(), "product", productCode);
+
         // TODO: this should increment from 1 for every login to the server
         int serverToken = RANDOM.nextInt() & 0x7FFFFFFF;
         sessionManager.set(ctx.channel(), "serverToken", String.valueOf(serverToken));
