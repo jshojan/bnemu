@@ -53,11 +53,10 @@ public class BncsServer {
         // Initialize core components
         AccountDao accountDao = new MongoAccountDao(db);
         SessionManager sessions = new SessionManager();
-        ChatChannelManager channelManager = new ChatChannelManager(sessions);
-
-        // Pass all three into the dispatcher
         this.channelManager = new ChatChannelManager(sessions);
-        this.dispatcher = new BncsDispatcher(accountDao, sessions, channelManager);
+
+        // Pass all components into the dispatcher (use same channelManager instance)
+        this.dispatcher = new BncsDispatcher(accountDao, sessions, this.channelManager);
     }
 
 
@@ -78,7 +77,8 @@ public class BncsServer {
                             pipeline.addLast(new InboundLoggingHandler());
                             pipeline.addLast(new BncsPacketEncoder());
                             pipeline.addLast(new OutboundLoggingHandler());
-                            pipeline.addLast(new IdleStateHandler(60, 0, 0));
+                            // Send ping every 30s of write idle, disconnect after 120s of read idle
+                            pipeline.addLast(new IdleStateHandler(120, 30, 0));
                             pipeline.addLast(new SessionTimeoutHandler(channelManager));
                             pipeline.addLast(new SimpleChannelInboundHandler<BncsPacket>() {
                                 @Override

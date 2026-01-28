@@ -50,12 +50,12 @@ public class ChatCommandHandler extends BncsPacketHandler {
                 return;
             }
 
-            if (message.startsWith("/whisper ")) {
+            if (message.startsWith("/whisper ") || message.startsWith("/w ") || message.startsWith("/msg ")) {
                 String[] parts = message.split(" ", 3);
                 if (parts.length >= 3) {
                     String targetUser = parts[1];
                     String whisperMessage = parts[2];
-                    whisperManager.sendWhisper(username, targetUser, whisperMessage);
+                    whisperManager.sendWhisper(ctx.channel(), username, targetUser, whisperMessage);
                 }
                 return;
             }
@@ -64,7 +64,7 @@ public class ChatCommandHandler extends BncsPacketHandler {
                 String emote = message.substring(7);
                 ChatChannel chan = channelManager.getChannel(currentChannel);
                 if (chan != null) {
-                    chan.broadcastChatEvent(ChatEventIds.EID_EMOTE, username, emote);
+                    chan.broadcastChatEvent(ChatEventIds.EID_EMOTE.getId(), username, emote);
                 }
                 return;
             }
@@ -86,9 +86,8 @@ public class ChatCommandHandler extends BncsPacketHandler {
             }
 
             if (message.equals("/whoami")) {
-                // TODO: hardcoded values in here for testing
                 var output = ChatEventBuilder.build(
-                    ChatEventIds.EID_INFO,
+                    ChatEventIds.EID_INFO.getId(),
                     0,
                     0,
                     0,
@@ -116,7 +115,7 @@ public class ChatCommandHandler extends BncsPacketHandler {
 
         ChatChannel chan = channelManager.getChannel(currentChannel);
         if (chan != null) {
-            chan.broadcastChatEvent(ChatEventIds.EID_TALK, username, message);
+            chan.broadcastChatEvent(ChatEventIds.EID_TALK.getId(), username, message);
         }
     }
 }

@@ -43,16 +43,26 @@ public class BncsDispatcher {
         register(new AccountLogonProofHandler(accountDao, sessions));
         register(new AuthInfoHandler(sessions));
         register(new AuthCheckHandler(sessions));
-        register(new EnterChatHandler());
+        register(new EnterChatHandler(sessions));
         register(new ChatCommandHandler(sessions, channelManager));
         register(new PingHandler());
+        register(new NullHandler());
         register(new LogonResponse2Handler(accountDao, sessions));
         register(new CreateAccount2Handler(accountDao));
         register(new GetChannelListHandler());
 
-        // Only register JoinChannelHandler if channelManager is available
+        // W2BN/older games handlers
+        register(new ClientIdHandler());
+        register(new LocaleInfoHandler());
+        register(new StartVersioningHandler(sessions));
+        register(new ReportVersionHandler());
+        register(new CdKey2Handler(sessions));
+        register(new LogonResponseHandler(accountDao, sessions));
+
+        // Only register channel-related handlers if channelManager is available
         if (channelManager != null) {
             register(new JoinChannelHandler(sessions, channelManager));
+            register(new LeaveChatHandler(sessions, channelManager));
         }
     }
 
@@ -65,7 +75,7 @@ public class BncsDispatcher {
         if (handler != null) {
             handler.handle(ctx, packet);
         } else {
-            logger.debug("No handler found for packet ID: 0x{}", String.format("%02X", packet.packetId().getCode()));
+            logger.debug("No handler found for packet ID: 0x{}", String.format("%02X", packet.rawPacketId()));
         }
     }
 }
