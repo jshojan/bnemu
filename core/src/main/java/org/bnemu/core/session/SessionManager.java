@@ -31,7 +31,28 @@ public class SessionManager {
     }
 
     public Channel getChannelByUsername(String username) {
-        return userToChannelMap.get(username.toLowerCase());
+        // Strip leading '*' — Battle.net convention for account-name lookup
+        if (username.startsWith("*")) {
+            username = username.substring(1);
+        }
+        String lower = username.toLowerCase();
+        Channel ch = userToChannelMap.get(lower);
+        if (ch != null) return ch;
+
+        // Fallback: for D2 users with "CharName*AccountName" display names,
+        // match by either the character name or account name part
+        for (Map.Entry<String, Channel> entry : userToChannelMap.entrySet()) {
+            String key = entry.getKey();
+            int star = key.indexOf('*');
+            if (star >= 0) {
+                String charPart = key.substring(0, star);
+                String acctPart = key.substring(star + 1);
+                if (charPart.equals(lower) || acctPart.equals(lower)) {
+                    return entry.getValue();
+                }
+            }
+        }
+        return null;
     }
 
     public String getUsername(Channel channel) {

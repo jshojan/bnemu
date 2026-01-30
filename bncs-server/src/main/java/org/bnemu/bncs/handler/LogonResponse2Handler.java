@@ -47,21 +47,25 @@ public class LogonResponse2Handler extends BncsPacketHandler {
         Account account = accountDao.findAccount(usernameLower);
         if (account == null) {
             statusCode = 0x01;
+            logger.info("Login failed for '{}': account not found", username);
         } else {
             byte[] storedHash = account.getPasswordHashBytes();
             byte[] expectedProof = computeProof(clientToken, serverToken, storedHash);
 
-            logger.debug("Login attempt for '{}': clientToken={}, serverToken={}", username, clientToken, serverToken);
-            logger.trace("Stored passwordHash: {}", Arrays.toString(storedHash));
-            logger.trace("ClientProof received: {}", Arrays.toString(clientProof));
-            logger.trace("ExpectedProof computed: {}", Arrays.toString(expectedProof));
+            logger.debug("Login attempt for '{}': clientToken=0x{}, serverToken=0x{}",
+                username, Integer.toHexString(clientToken), Integer.toHexString(serverToken));
+            logger.debug("Stored hash:    {}", Arrays.toString(storedHash));
+            logger.debug("Client proof:   {}", Arrays.toString(clientProof));
+            logger.debug("Expected proof: {}", Arrays.toString(expectedProof));
 
             if (MessageDigest.isEqual(expectedProof, clientProof)) {
                 statusCode = 0x00;
                 sessionManager.setUsername(ctx.channel(), usernameLower);
                 sessionManager.markAuthenticated(ctx.channel());
+                logger.info("Login successful for '{}'", username);
             } else {
                 statusCode = 0x02;
+                logger.info("Login failed for '{}': invalid password (proof mismatch)", username);
             }
         }
 
@@ -74,11 +78,10 @@ public class LogonResponse2Handler extends BncsPacketHandler {
     }
 
     private byte[] computeProof(int clientToken, int serverToken, byte[] passwordHash) {
-        ByteBuffer buf = ByteBuffer.allocate(4 + 4 + 1 + passwordHash.length).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer buf = ByteBuffer.allocate(4 + 4 + passwordHash.length).order(ByteOrder.LITTLE_ENDIAN);
         buf.putInt(clientToken);
         buf.putInt(serverToken);
         buf.put(passwordHash);
-        buf.put((byte) 0);
 
         byte[] inputArray = buf.array();
         logger.trace("Hashing input bytes: {}", Arrays.toString(inputArray));

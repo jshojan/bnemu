@@ -3,7 +3,6 @@ package org.bnemu.core.config;
 public class ServerConfig {
     private PortConfig bncs;
     private PortConfig d2cs;
-    private PortConfig d2dbs;
     private PortConfig d2gs;
     private PortConfig telnet;
 
@@ -21,14 +20,6 @@ public class ServerConfig {
 
     public void setD2cs(PortConfig d2cs) {
         this.d2cs = d2cs;
-    }
-
-    public PortConfig getD2dbs() {
-        return d2dbs;
-    }
-
-    public void setD2dbs(PortConfig d2dbs) {
-        this.d2dbs = d2dbs;
     }
 
     public PortConfig getD2gs() {

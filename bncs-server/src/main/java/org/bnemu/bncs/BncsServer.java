@@ -24,15 +24,21 @@ import org.bnemu.bncs.net.packet.BncsPacket;
 import org.bnemu.bncs.net.packet.BncsPacketDecoder;
 import org.bnemu.bncs.net.packet.BncsPacketEncoder;
 import org.bnemu.core.session.SessionManager;
+import org.bnemu.core.auth.RealmTokenStore;
+import org.bnemu.core.auth.SelectedCharacterStore;
+import org.bnemu.bnftp.BnftpFileProvider;
 import org.bnemu.persistence.dao.MongoAccountDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.file.Path;
 
 public class BncsServer {
     private static final Logger logger = LoggerFactory.getLogger(BncsServer.class);
     private final int port;
     private final BncsDispatcher dispatcher;
     private final ChatChannelManager channelManager;
+    private final BnftpFileProvider bnftpFileProvider;
 
     public BncsServer(CoreConfig config) {
         this.port = config.getServer().getBncs().getPort();
@@ -50,13 +56,23 @@ public class BncsServer {
         MongoClient mongoClient = MongoClients.create(mongoUri);
         MongoDatabase db = mongoClient.getDatabase(config.getMongo().getDatabase());
 
+        // Initialize shared token store for D2 realm auth
+        RealmTokenStore.initialize(db);
+
+        // Initialize selected character store for cross-server sharing
+        SelectedCharacterStore.initialize(db);
+
         // Initialize core components
         AccountDao accountDao = new MongoAccountDao(db);
         SessionManager sessions = new SessionManager();
         this.channelManager = new ChatChannelManager(sessions);
 
+        // Initialize BNFTP file provider
+        this.bnftpFileProvider = new BnftpFileProvider(Path.of(config.getBnftp().getFilesDir()));
+
         // Pass all components into the dispatcher (use same channelManager instance)
-        this.dispatcher = new BncsDispatcher(accountDao, sessions, this.channelManager);
+        this.dispatcher = new BncsDispatcher(accountDao, sessions, this.channelManager, config,
+                                             SelectedCharacterStore.getInstance(), bnftpFileProvider);
     }
 
 
@@ -73,7 +89,7 @@ public class BncsServer {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ChannelPipeline pipeline = ch.pipeline();
-                            pipeline.addLast(new BncsPacketDecoder());
+                            pipeline.addLast(new BncsPacketDecoder(bnftpFileProvider));
                             pipeline.addLast(new InboundLoggingHandler());
                             pipeline.addLast(new BncsPacketEncoder());
                             pipeline.addLast(new OutboundLoggingHandler());

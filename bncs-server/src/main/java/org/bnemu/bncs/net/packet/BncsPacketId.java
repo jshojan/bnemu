@@ -11,6 +11,7 @@ public enum BncsPacketId {
     SID_CHATCOMMAND(0x0E),
     SID_CHATEVENT(0x0F),
     SID_LEAVECHAT(0x10),
+    SID_CHECKAD(0x15),               // Ad/banner check (no-op)
     SID_LOCALEINFO(0x12),            // W2BN locale information
     SID_MESSAGEBOX(0x19),
     SID_CLIENTID(0x1E),              // W2BN/older games client identification
@@ -20,6 +21,8 @@ public enum BncsPacketId {
     SID_CDKEY2(0x36),                // W2BN/older games CD key verification
     SID_LOGONRESPONSE2(0x3A),
     SID_CREATEACCOUNT2(0x3D),
+    SID_LOGONREALMEX(0x3E),          // D2 realm login
+    SID_QUERYREALMS2(0x40),          // D2 realm list query
     SID_AUTH_INFO(0x50),
     SID_AUTH_CHECK(0x51),
     SID_CREATEACCOUNT(0x52),

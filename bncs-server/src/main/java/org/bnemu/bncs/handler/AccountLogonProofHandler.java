@@ -40,6 +40,11 @@ public class AccountLogonProofHandler extends BncsPacketHandler {
         }
         logger.debug("Login attempt for {} verified: {}", username, verified);
 
+        if (verified && username != null) {
+            sessions.setUsername(ctx.channel(), username.toLowerCase());
+            sessions.markAuthenticated(ctx.channel());
+        }
+
         var output = new BncsPacketBuffer()
             .writeByte(verified ? 0x00 : 0x01);
         send(ctx, output);

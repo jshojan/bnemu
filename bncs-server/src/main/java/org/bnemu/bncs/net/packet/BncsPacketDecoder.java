@@ -3,6 +3,8 @@ package org.bnemu.bncs.net.packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import org.bnemu.bnftp.BnftpFileProvider;
+import org.bnemu.bnftp.BnftpHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +12,16 @@ import java.util.List;
 
 public class BncsPacketDecoder extends ByteToMessageDecoder {
     private static final Logger logger = LoggerFactory.getLogger(BncsPacketDecoder.class);
+
+    private static final byte PROTOCOL_BNCS = 0x01;
+    private static final byte PROTOCOL_BNFTP = 0x02;
+
+    private final BnftpFileProvider bnftpFileProvider;
     private boolean protocolByteRead = false;
+
+    public BncsPacketDecoder(BnftpFileProvider bnftpFileProvider) {
+        this.bnftpFileProvider = bnftpFileProvider;
+    }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
@@ -22,6 +33,18 @@ public class BncsPacketDecoder extends ByteToMessageDecoder {
             byte protocolByte = in.readByte();
             logger.debug("Protocol byte received: 0x{}", String.format("%02X", protocolByte));
             protocolByteRead = true;
+
+            if (protocolByte == PROTOCOL_BNFTP) {
+                logger.info("BNFTP connection detected, switching pipeline");
+                ctx.pipeline().replace(this, "bnftp", new BnftpHandler(bnftpFileProvider));
+                return;
+            }
+
+            if (protocolByte != PROTOCOL_BNCS) {
+                logger.warn("Unsupported protocol byte: 0x{}", String.format("%02X", protocolByte));
+                ctx.close();
+                return;
+            }
         }
 
         // Step 2: Process BNCS packets
