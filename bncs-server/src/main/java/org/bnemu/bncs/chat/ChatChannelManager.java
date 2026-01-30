@@ -24,6 +24,13 @@ public class ChatChannelManager {
     public void joinChannel(String channelName, ChannelHandlerContext ctx, String username) {
         ChatChannel newChannel = getOrCreateChannel(channelName);
 
+        // Check ban before leaving old channel
+        if (newChannel.isBanned(username)) {
+            // Per PvPGN: silently reject banned users (send restricted event)
+            newChannel.sendErrorMessage(ctx.channel(), "You are banned from that channel.");
+            return;
+        }
+
         // Leave old channel
         String oldChannel = sessionManager.get(ctx.channel(), "channel");
         if (oldChannel != null && !oldChannel.equals(channelName)) {
@@ -38,7 +45,6 @@ public class ChatChannelManager {
 
         sessionManager.set(ctx.channel(), "channel", channelName);
         newChannel.addMember(ctx.channel(), username);
-        //newChannel.broadcastJoinEvents(ctx.channel(), username);
     }
 
     public void leaveChannel(ChannelHandlerContext ctx) {
@@ -60,6 +66,7 @@ public class ChatChannelManager {
     }
 
     public ChatChannel getChannel(String name) {
+        if (name == null) return null;
         return channels.get(name);
     }
 

@@ -6,17 +6,21 @@ import org.bnemu.bncs.net.packet.BncsPacketBuffer;
 import org.bnemu.bncs.net.packet.BncsPacketId;
 import org.bnemu.core.session.SessionManager;
 
+import org.bnemu.bnftp.BnftpFileProvider;
 import java.util.Random;
 
 public class AuthInfoHandler extends BncsPacketHandler {
-    private static final int LOGON_TYPE = 0; // 0 = Broken SHA-1 (default for StarCraft)
-    private static final String MPQ_FILENAME = "ver-IX86-0.mpq";
-    private static final String CHECK_REVISION_FORMULA = "A=125933019 B=665814511 C=736475113 4 A=A+S B=B^C C=C^A A=A^B";
+    private static final int LOGON_TYPE = 0; // 0 = Broken SHA-1 (default for StarCraft/D2)
+    private static final String MPQ_FILENAME = "ver-IX86-1.mpq";
+    private static final String CHECKREVISION_FORMULA =
+        "A=3845581634 B=880823580 C=1363937103 4 A=A-S B=B-C C=C-A A=A-B";
     private static final Random RANDOM = new Random();
     private final SessionManager sessionManager;
+    private final BnftpFileProvider bnftpFileProvider;
 
-    public AuthInfoHandler(SessionManager sessionManager) {
+    public AuthInfoHandler(SessionManager sessionManager, BnftpFileProvider bnftpFileProvider) {
         this.sessionManager = sessionManager;
+        this.bnftpFileProvider = bnftpFileProvider;
     }
 
     @Override
@@ -46,14 +50,25 @@ public class AuthInfoHandler extends BncsPacketHandler {
         int serverToken = RANDOM.nextInt() & 0x7FFFFFFF;
         sessionManager.set(ctx.channel(), "serverToken", String.valueOf(serverToken));
 
+        // Get real FILETIME from the MPQ file on disk (client hangs/crashes if this is zero)
+        long filetime = bnftpFileProvider.getFiletime(MPQ_FILENAME);
+        int filetimeLow = (int) (filetime & 0xFFFFFFFFL);
+        int filetimeHigh = (int) (filetime >>> 32);
+
         var output = new BncsPacketBuffer()
             .writeDword(LOGON_TYPE)
             .writeDword(serverToken)
             .writeDword(0x02C9)
-            .writeDword(0x00)
-            .writeDword(0x00)
+            .writeDword(filetimeLow)
+            .writeDword(filetimeHigh)
             .writeString(MPQ_FILENAME)
-            .writeString(CHECK_REVISION_FORMULA);
+            .writeString(CHECKREVISION_FORMULA);
         send(ctx, output);
+
+        // Send SID_PING for login-time latency measurement
+        // Client echoes the cookie back; PingHandler records RTT on first response
+        int pingCookie = (int) System.currentTimeMillis();
+        var pingPayload = new BncsPacketBuffer().writeDword(pingCookie);
+        ctx.writeAndFlush(new BncsPacket(BncsPacketId.SID_PING, pingPayload));
     }
 }

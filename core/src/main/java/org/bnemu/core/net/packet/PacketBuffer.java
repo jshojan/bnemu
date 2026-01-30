@@ -3,6 +3,8 @@ package org.bnemu.core.net.packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
+import java.nio.charset.StandardCharsets;
+
 public abstract class PacketBuffer<A, B extends PacketBuffer<A, B>> {
     protected ByteBuf buf;
 
@@ -51,7 +53,7 @@ public abstract class PacketBuffer<A, B extends PacketBuffer<A, B>> {
     }
 
     public B writeString(String s) {
-        buf.writeBytes(s.getBytes());
+        buf.writeBytes(s.getBytes(StandardCharsets.ISO_8859_1));
         buf.writeByte((byte) 0x00);
         return self();
     }

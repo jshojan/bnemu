@@ -37,6 +37,14 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- BNFTP (Battle.net File Transfer Protocol) -->
+        <dependency>
+            <groupId>org.bnemu</groupId>
+            <artifactId>bnftp</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- Persistence logic -->
         <dependency>
             <groupId>org.bnemu</groupId>

@@ -16,41 +16,42 @@ public class WhisperManager {
         Channel targetChannel = sessionManager.getChannelByUsername(toUser);
 
         if (targetChannel != null && targetChannel.isActive()) {
+            // Check DND (Do Not Disturb) - block the whisper entirely
+            String dndMsg = sessionManager.get(targetChannel, "dnd");
+            if (dndMsg != null) {
+                var dndError = ChatEventBuilder.build(
+                    ChatEventIds.EID_ERROR.getId(), 0, 0, 0, 0, 0, "",
+                    toUser + " is in Do Not Disturb mode (" + dndMsg + ")."
+                );
+                senderChannel.writeAndFlush(new BncsPacket(BncsPacketId.SID_CHATEVENT, dndError));
+                return;
+            }
+
             // Send EID_WHISPER to the recipient with the message
             var whisperToTarget = ChatEventBuilder.build(
-                ChatEventIds.EID_WHISPER.getId(),
-                0,  // flags
-                0,  // ping
-                0,  // ip (defunct)
-                0,  // account (defunct)
-                0,  // regAuth (defunct)
-                fromUser,
-                message
+                ChatEventIds.EID_WHISPER.getId(), 0, 0, 0, 0, 0, fromUser, message
             );
             targetChannel.writeAndFlush(new BncsPacket(BncsPacketId.SID_CHATEVENT, whisperToTarget));
 
             // Send EID_WHISPERSENT confirmation to the sender
             var whisperSent = ChatEventBuilder.build(
-                ChatEventIds.EID_WHISPERSENT.getId(),
-                0,  // flags (sender's flags)
-                0,  // ping (sender's ping)
-                0,  // ip (defunct)
-                0,  // account (defunct)
-                0,  // regAuth (defunct)
-                toUser,
-                message
+                ChatEventIds.EID_WHISPERSENT.getId(), 0, 0, 0, 0, 0, toUser, message
             );
             senderChannel.writeAndFlush(new BncsPacket(BncsPacketId.SID_CHATEVENT, whisperSent));
+
+            // Check away status - deliver whisper but notify sender
+            String awayMsg = sessionManager.get(targetChannel, "away");
+            if (awayMsg != null) {
+                var awayInfo = ChatEventBuilder.build(
+                    ChatEventIds.EID_INFO.getId(), 0, 0, 0, 0, 0, "",
+                    toUser + " is away (" + awayMsg + ")."
+                );
+                senderChannel.writeAndFlush(new BncsPacket(BncsPacketId.SID_CHATEVENT, awayInfo));
+            }
         } else {
             // User not found - send error to sender
             var errorPacket = ChatEventBuilder.build(
-                ChatEventIds.EID_ERROR.getId(),
-                0,
-                0,
-                0,
-                0,
-                0,
-                "",
+                ChatEventIds.EID_ERROR.getId(), 0, 0, 0, 0, 0, "",
                 "That user is not logged on."
             );
             senderChannel.writeAndFlush(new BncsPacket(BncsPacketId.SID_CHATEVENT, errorPacket));
